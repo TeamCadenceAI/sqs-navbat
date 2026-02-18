@@ -62,6 +62,12 @@ pub fn compute_md5(input: &str) -> String {
     format!("{:x}", digest)
 }
 
+/// Extract the queue name from a QueueUrl like "http://localhost:9090/myqueue".
+/// Returns the last path segment.
+pub fn extract_queue_name_from_url(url: &str) -> Option<String> {
+    url.split('/').last().filter(|s| !s.is_empty()).map(|s| s.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use regex::RegexBuilder;

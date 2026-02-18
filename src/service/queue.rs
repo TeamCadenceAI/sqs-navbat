@@ -122,6 +122,76 @@ impl<'a> Queue<'a> {
         Ok(queue_urls)
     }
 
+    /// Get all attributes for a queue from the database.
+    pub async fn get_queue_attributes(
+        &self,
+        queue_name: &str,
+    ) -> anyhow::Result<HashMap<String, String>> {
+        let rows: Vec<(String, String)> = sqlx::query_as(
+            r#"
+            SELECT a.name, a.value
+            FROM attributes a
+            JOIN queues q ON q.id = a.queue_id
+            WHERE q.name = ?
+            "#,
+        )
+        .bind(queue_name)
+        .fetch_all(self.db_pool)
+        .await?;
+
+        let mut map = HashMap::new();
+        for (name, value) in rows {
+            map.insert(name, value);
+        }
+        Ok(map)
+    }
+
+    /// Set (upsert) attributes for a queue in the database.
+    pub async fn set_queue_attributes(
+        &self,
+        queue_name: &str,
+        attrs: HashMap<String, String>,
+    ) -> anyhow::Result<()> {
+        // Look up queue id
+        let (queue_id,): (i64,) = sqlx::query_as(
+            r#"SELECT id FROM queues WHERE name = ?"#,
+        )
+        .bind(queue_name)
+        .fetch_one(self.db_pool)
+        .await?;
+
+        for (key, value) in attrs {
+            // Try update first, then insert if no rows affected
+            let result = sqlx::query(
+                r#"
+                UPDATE attributes SET value = ?
+                WHERE queue_id = ? AND name = ?
+                "#,
+            )
+            .bind(&value)
+            .bind(queue_id)
+            .bind(&key)
+            .execute(self.db_pool)
+            .await?;
+
+            if result.rows_affected() == 0 {
+                sqlx::query(
+                    r#"
+                    INSERT INTO attributes (queue_id, name, value)
+                    VALUES (?, ?, ?)
+                    "#,
+                )
+                .bind(queue_id)
+                .bind(&key)
+                .bind(&value)
+                .execute(self.db_pool)
+                .await?;
+            }
+        }
+
+        Ok(())
+    }
+
     #[allow(dead_code)]
     pub fn send_message(&self) {
         todo!()

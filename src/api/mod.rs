@@ -1,13 +1,17 @@
 use crate::AppState;
 use actix_web::{post, web, HttpRequest, HttpResponse};
-use quick_xml::de::from_str;
 use serde::{de::DeserializeOwned, Deserialize};
 
+mod change_message_visibility;
 mod create_queue;
+mod delete_message;
+mod get_queue_attributes;
+mod get_queue_url;
 mod helpers;
 mod list_queues;
 mod receive_message;
 mod send_message;
+mod set_queue_attributes;
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "PascalCase")]
@@ -43,6 +47,21 @@ pub async fn post_handler(
         }
         "amazonsqs.receivemessage" | "receivemessage" => {
             receive_message::process(app_state.into_inner(), &payload, is_json).await
+        }
+        "amazonsqs.deletemessage" | "deletemessage" => {
+            delete_message::process(app_state.into_inner(), &payload, is_json).await
+        }
+        "amazonsqs.changemessagevisibility" | "changemessagevisibility" => {
+            change_message_visibility::process(app_state.into_inner(), &payload, is_json).await
+        }
+        "amazonsqs.getqueueurl" | "getqueueurl" => {
+            get_queue_url::process(app_state.into_inner(), &payload, is_json).await
+        }
+        "amazonsqs.getqueueattributes" | "getqueueattributes" => {
+            get_queue_attributes::process(app_state.into_inner(), &payload, is_json).await
+        }
+        "amazonsqs.setqueueattributes" | "setqueueattributes" => {
+            set_queue_attributes::process(app_state.into_inner(), &payload, is_json).await
         }
         _ => return HttpResponse::BadRequest().body("Invalid action"),
     };

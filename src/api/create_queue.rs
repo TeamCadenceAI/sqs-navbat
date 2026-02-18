@@ -1,7 +1,7 @@
 use super::helpers;
 use crate::AppState;
 use actix_web::{web, HttpResponse};
-use regex::{Regex, RegexBuilder};
+use regex::RegexBuilder;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 use std::{collections::HashMap, sync::Arc};
@@ -140,10 +140,16 @@ pub async fn process(
                 reponse_metadata: HashMap::new(),
             };
 
+            let visibility_timeout = payload
+                .clone()
+                .get_attrbutes_hashmap()
+                .get("VisibilityTimeout")
+                .and_then(|v| v.parse::<u32>().ok());
+
             let mut writer = app_state.queues.lock().await;
             (*writer).insert(
                 payload.queue_name.clone(),
-                crate::queue::Queue::new(&payload.queue_name.clone(), vec![]),
+                crate::queue::Queue::new(&payload.queue_name.clone(), vec![], visibility_timeout),
             );
 
             return match quick_xml::se::to_string(&response) {
