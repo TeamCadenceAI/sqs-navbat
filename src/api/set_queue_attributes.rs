@@ -41,7 +41,8 @@ pub async fn process(
     let queue_name = match helpers::extract_queue_name_from_url(&params.queue_url) {
         Some(name) => name,
         None => {
-            return HttpResponse::BadRequest().body("Invalid QueueUrl: could not extract queue name")
+            return HttpResponse::BadRequest()
+                .body("Invalid QueueUrl: could not extract queue name")
         }
     };
 

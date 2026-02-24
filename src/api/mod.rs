@@ -35,7 +35,7 @@ pub async fn post_handler(
         return HttpResponse::BadRequest().body("JSON is not supported yet");
     }
 
-    return match action.to_lowercase().as_str() {
+    match action.to_lowercase().as_str() {
         "amazonsqs.createqueue" | "createqueue" => {
             create_queue::process(app_state.into_inner(), &payload, is_json).await
         }
@@ -63,8 +63,8 @@ pub async fn post_handler(
         "amazonsqs.setqueueattributes" | "setqueueattributes" => {
             set_queue_attributes::process(app_state.into_inner(), &payload, is_json).await
         }
-        _ => return HttpResponse::BadRequest().body("Invalid action"),
-    };
+        _ => HttpResponse::BadRequest().body("Invalid action"),
+    }
 }
 
 pub(crate) fn struct_from_url_encode<T>(payload: &web::Bytes) -> Result<T, actix_web::Error>
@@ -83,14 +83,14 @@ where
 }
 
 fn get_action_name(payload: &web::Bytes, req: &HttpRequest) -> Option<String> {
-    return match req.headers().get("x-amz-target") {
+    match req.headers().get("x-amz-target") {
         Some(target) => Some(target.to_str().unwrap().to_string()),
         None => {
-            let act = struct_from_url_encode::<RequestPayload>(&payload);
+            let act = struct_from_url_encode::<RequestPayload>(payload);
             if act.is_err() {
                 return None;
             }
             Some(act.unwrap().action.to_string())
         }
-    };
+    }
 }

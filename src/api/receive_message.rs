@@ -72,11 +72,12 @@ pub async fn process(
     let queue_name = match super::helpers::extract_queue_name_from_url(&params.queue_url) {
         Some(name) => name,
         None => {
-            return HttpResponse::BadRequest().body("Invalid QueueUrl: could not extract queue name")
+            return HttpResponse::BadRequest()
+                .body("Invalid QueueUrl: could not extract queue name")
         }
     };
 
-    let max = params.max_number_of_messages.min(10).max(1);
+    let max = params.max_number_of_messages.clamp(1, 10);
     let deadline = tokio::time::Instant::now()
         + tokio::time::Duration::from_secs(params.wait_time_seconds as u64);
 
@@ -114,16 +115,17 @@ pub async fn process(
                 name: "ApproximateReceiveCount".to_string(),
                 value: msg.receive_count.to_string(),
             });
-            if let Some(_first) = msg.first_received_at {
+            if let Some(first) = msg.first_received_at {
+                // Convert monotonic Instant to wall-clock time
+                let elapsed_since_first = std::time::Instant::now() - first;
+                let first_receive_time = std::time::SystemTime::now() - elapsed_since_first;
                 attrs.push(AttributeXml {
                     name: "ApproximateFirstReceiveTimestamp".to_string(),
-                    value: format!(
-                        "{}",
-                        std::time::SystemTime::now()
-                            .duration_since(std::time::UNIX_EPOCH)
-                            .unwrap()
-                            .as_millis()
-                    ),
+                    value: first_receive_time
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis()
+                        .to_string(),
                 });
             }
 

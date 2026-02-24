@@ -54,7 +54,8 @@ pub async fn process(
     let queue_name = match super::helpers::extract_queue_name_from_url(&params.queue_url) {
         Some(name) => name,
         None => {
-            return HttpResponse::BadRequest().body("Invalid QueueUrl: could not extract queue name")
+            return HttpResponse::BadRequest()
+                .body("Invalid QueueUrl: could not extract queue name")
         }
     };
 
@@ -70,10 +71,13 @@ pub async fn process(
 
     // Get DB-stored attributes
     let service = crate::service::queue::Queue::new(&app_state.db_pool, &app_state.host_name);
-    let db_attrs = service
-        .get_queue_attributes(&queue_name)
-        .await
-        .unwrap_or_default();
+    let db_attrs = match service.get_queue_attributes(&queue_name).await {
+        Ok(attrs) => attrs,
+        Err(e) => {
+            return HttpResponse::InternalServerError()
+                .body(format!("Failed to load queue attributes: {}", e));
+        }
+    };
 
     // Get in-memory computed attributes
     let reader = app_state.queues.lock().await;
@@ -97,7 +101,9 @@ pub async fn process(
         ),
         (
             "ApproximateNumberOfMessagesNotVisible",
-            queue.approximate_number_of_messages_not_visible().to_string(),
+            queue
+                .approximate_number_of_messages_not_visible()
+                .to_string(),
         ),
         (
             "VisibilityTimeout",

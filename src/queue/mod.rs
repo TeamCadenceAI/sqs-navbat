@@ -32,7 +32,9 @@ pub struct QueueTags {
 
 #[derive(Debug, Clone)]
 pub struct Queue {
+    #[allow(dead_code)]
     name: String,
+    #[allow(dead_code)]
     tags: Vec<QueueTags>,
     pub default_visibility_timeout: u32,
     messages: VecDeque<Message>,

@@ -41,12 +41,19 @@ pub async fn process(
         }
     };
 
-    let reader = app_state.queues.lock().await;
-    if !reader.contains_key(&params.queue_name) {
-        return HttpResponse::BadRequest().body(format!(
-            "AWS.SimpleQueueService.NonExistentQueue; Queue: {}",
-            params.queue_name
-        ));
+    let service = crate::service::queue::Queue::new(&app_state.db_pool, &app_state.host_name);
+    match service.queue_exists(&params.queue_name).await {
+        Ok(false) => {
+            return HttpResponse::BadRequest().body(format!(
+                "AWS.SimpleQueueService.NonExistentQueue; Queue: {}",
+                params.queue_name
+            ));
+        }
+        Err(e) => {
+            return HttpResponse::InternalServerError()
+                .body(format!("Failed to query database: {}", e));
+        }
+        Ok(true) => {}
     }
 
     let response = GetQueueUrlResponse {

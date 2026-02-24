@@ -12,7 +12,7 @@
 ## Installation
 
 ```bash
-$ git clone git@github.com:TeamCadenceAI/sqs-navbat.git
+$ git clone git@github.com:oneslash/sqs-navbat.git
 $ cd sqs-navbat
 $ cargo build
 ```

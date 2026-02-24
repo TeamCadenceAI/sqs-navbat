@@ -3,12 +3,10 @@ use crate::AppState;
 use actix_web::{web, HttpResponse};
 use regex::RegexBuilder;
 use serde::{Deserialize, Serialize};
-use tracing::warn;
 use std::{collections::HashMap, sync::Arc};
+use tracing::warn;
 
 /// .fifo - for the FIFO queues
-///
-
 const ATTR_LIST: [&str; 12] = [
     "DelaySeconds",
     "MaximumMessageSize",
@@ -24,7 +22,7 @@ const ATTR_LIST: [&str; 12] = [
     "SqsManagedSseEnabled",
 ];
 
-const ATTR_FIFO: [&str; 4] = [
+const _ATTR_FIFO: [&str; 4] = [
     "FifoQueue",
     "ContentBasedDeduplication",
     "DeduplicationScope",
@@ -152,15 +150,14 @@ pub async fn process(
                 crate::queue::Queue::new(&payload.queue_name.clone(), vec![], visibility_timeout),
             );
 
-            return match quick_xml::se::to_string(&response) {
+            match quick_xml::se::to_string(&response) {
                 Ok(resp) => HttpResponse::Ok().body(resp),
                 Err(e) => HttpResponse::InternalServerError()
                     .body(format!("Failed to serialize response: {}", e)),
-            };
+            }
         }
         Err(e) => {
-            return HttpResponse::InternalServerError()
-                .body(format!("Failed to create queue: {}", e))
+            HttpResponse::InternalServerError().body(format!("Failed to create queue: {}", e))
         }
     }
 }
