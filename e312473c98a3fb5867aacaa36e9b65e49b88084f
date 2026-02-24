@@ -1,0 +1,12 @@
+---
+cadence_version: 2
+agent: claude-code
+session_id: 79a3a6eb-1047-4597-87c9-ae1c4541034d
+repo: /Users/chrisraethke/projects/sqs-navbat
+commit: e312473c98a3fb5867aacaa36e9b65e49b88084f
+confidence: time_window_match
+session_start: 2026-02-24T09:44:23Z
+payload_blob: e0714136d9c5772f425baca8a9fd8510d8606373
+payload_sha256: be47cf153c952815816922bbd1b2e4f9286effc597550159f7cb6e82a54bad9b
+payload_encoding: zstd+pgp
+---
